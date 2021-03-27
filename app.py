@@ -1,3 +1,4 @@
+import os
 from flask import Flask, jsonify
 from flask_restful import Api
 from flask_jwt_extended import JWTManager
@@ -9,7 +10,12 @@ from resources.item import Item, ItemList
 from resources.store import Store, StoreList
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+
+herokuDBURL = os.environ.get('DATABASE_URL','sqlite:///data.db')
+if "postgres://" in herokuDBURL:
+    herokuDBURL = "postgresql://" + herokuDBURL.removeprefix("postgres://")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = herokuDBURL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PROPAGATE_EXCEPTIONS'] = True
 #app.config['JWT_BLACKLIST_ENABLED'] = True  # enable blacklist feature
@@ -95,5 +101,6 @@ api.add_resource(TokenRefresh, '/refresh')
 api.add_resource(UserLogout, '/logout')
 
 if __name__ == '__main__':
+    from db import db
     db.init_app(app)
     app.run(port=5000, debug=True)
